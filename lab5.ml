@@ -19,7 +19,9 @@ Part 1: Fun with references
 Consider a function inc that takes an int ref and has the side effect
 of incrementing the integer stored in the ref. What is an appropriate
 type for the return value? What should the type for the function as a
-whole be? *)
+whole be?
+inc : int ref -> unit
+*)
 
    
 (* Now implement the function. (As usual, for this and succeeding
@@ -28,8 +30,9 @@ introduced in the skeleton code below. For instance, you might want to
 add a "rec", or use a different argument list, or no argument list at
 all but binding to an anonymous function instead.) *)
 
-let inc _ =
-  failwith "inc not implemented" ;;
+let inc (i : int ref) : unit =
+  i := !i + 1
+;;
 
 (* Write a function named remember that returns the last string that
 it was called with. The first time it is called, it should return the
@@ -46,9 +49,12 @@ This is probably the least functional function ever written.
 
 As usual, you shouldn't feel beholden to how the definition is
 introduced in the skeleton code below. *)
-
-let remember _ = 
-  failwith "remember not implemented" ;;
+let remember : string -> string =
+  let last = ref "" in
+  fun str ->
+    let s = !last in
+    last := str; s
+;;
 
 (*====================================================================
 Part 2: Gensym
@@ -90,8 +96,10 @@ Complete the implementation of gensym. As usual, you shouldn't feel
 beholden to how the definition is introduced in the skeleton code
 below. (We'll stop mentioning this now.) *)
 
-let gensym (s : string) : string = 
-  failwith "gensym not implemented" ;;
+let gensym : string -> string =
+  let ctr = ref (-1) in
+  fun s -> inc ctr; s ^ string_of_int(!ctr)
+;;
 
 (*====================================================================
 Part 3: Appending mutable lists
@@ -120,7 +128,8 @@ list to a mutable list, with behavior like this:
  *)
 
 let mlist_of_list (lst : 'a list) : 'a mlist =
-  failwith "mlist_of_list not implemented" ;;
+  List.fold_right (fun e acc -> Cons (e, ref acc)) lst Nil
+;;
 
 (* Define a function length to compute the length of an mlist. Try to
 do this without looking at the solution that is given in the lecture
@@ -132,12 +141,16 @@ slides.
     - : int = 4
  *)
 
-let length (m : 'a mlist) : int = 
-  failwith "length not implemented" ;;
+let rec length (m : 'a mlist) : int =
+  match m with
+  | Nil -> 0
+  | Cons (_, t_ref) -> 1 + length !t_ref
+;;
 
 (* What is the time complexity of the length function in O() notation
-in terms of the length of its list argument? *)
-
+in terms of the length of its list argument?
+O(n) (linear time)
+*)
 
 (* Now, define a function mappend that takes a *non-empty* mutable
 list and a second mutable list and, as a side effect, causes the first
@@ -204,8 +217,18 @@ Example of use:
               {contents = Cons (5, {contents = Cons (6, {contents = Nil})})})})})})
  *)
 
-let mappend _ = 
-  failwith "mappend not implemented" ;;
+let mappend (m1 : 'a mlist) (m2 : 'a mlist) : unit =
+  match m1 with
+  | Nil -> raise (Invalid_argument "mappend")
+  | Cons (_, tref) ->
+      if !tref = Nil then tref := m2
+      else mappend !tref m2;;
+      (* let rec m_inner (mref : 'a mlist ref) = *)
+      (*   match !mref with *)
+      (*   | Nil -> mref := m2 *)
+      (*   | Cons (_, t_ref) -> m_inner t_ref *)
+      (* in *)
+      (* m_inner tref *)
 
 (* What happens when you evaluate the following expressions
 sequentially in order?
@@ -296,8 +319,10 @@ module MakeImpQueue (A : sig
           | Cons(_, _) -> ()); 
          Some h
       | Nil -> None
-    let to_string q = 
-      failwith "to_string not implemented"
+    let rec to_string q =
+      match deq q with
+      | None -> "||"
+      | Some x -> (A.to_string x) ^ " -> " ^ (to_string q)
   end ;;
 
 (* To build an imperative queue, we apply the functor to an
