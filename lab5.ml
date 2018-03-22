@@ -217,7 +217,7 @@ Example of use:
               {contents = Cons (5, {contents = Cons (6, {contents = Nil})})})})})})
  *)
 
-let mappend (m1 : 'a mlist) (m2 : 'a mlist) : unit =
+let rec mappend (m1 : 'a mlist) (m2 : 'a mlist) : unit =
   match m1 with
   | Nil -> raise (Invalid_argument "mappend")
   | Cons (_, tref) ->
